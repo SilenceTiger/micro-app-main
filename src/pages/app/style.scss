@@ -1,0 +1,34 @@
+.main-container {
+  display: flex;
+  height: 100%;
+  .menu-container {
+    width: 216px;
+    height: 100%;
+    overflow-y: auto;
+    .logo-wrap {
+      height: 64px;
+      font-size: 32px;
+      color: blue;
+      font-weight: 700;
+      text-align: center;
+      line-height: 64px;
+    }
+    .ant-menu {
+      height: calc(100% - 64px);
+    }
+  }
+
+  .right-container {
+    flex: 1;
+    .head-container {
+      height: 64px;
+      background: yellowgreen;
+    }
+    .content-container {
+      height: calc(100% - 64px);
+      overflow-y: auto;
+      background: #f0f2f5;
+      position: relative;
+    }
+  }
+}
