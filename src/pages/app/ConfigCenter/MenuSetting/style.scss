@@ -1,0 +1,14 @@
+.menu-setting {
+  .menu-item {
+    &:hover {
+      .menu-icon-wrap {
+        display: inline-block;
+      }
+    }
+    .menu-icon-wrap {
+      display: none;
+      margin-left: 8px;
+      color: blueviolet;
+    }
+  }
+}

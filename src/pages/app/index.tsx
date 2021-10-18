@@ -1,22 +1,96 @@
-import React, { useLayoutEffect } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { Route, Switch, Redirect, useHistory } from 'react-router-dom';
 import { Menu } from 'antd';
-import { AppstoreOutlined, MailOutlined, SettingOutlined } from '@ant-design/icons';
 import Loading from 'components/Loading';
 import Home from './Home';
 import Dashboard from './Dashboard';
-import { start } from 'qiankun';
+import MenuSetting from './ConfigCenter/MenuSetting';
+import SystemRegister from './ConfigCenter/SystemRegister';
+import { start, registerMicroApps } from 'qiankun';
+import api from 'api/config-center';
 import './style.scss';
 
 const { SubMenu } = Menu;
 
+export const MenuData = [
+  {
+    key: 'home',
+    title: '首页'
+  },
+  {
+    key: 'dashboard',
+    title: 'Dashboard',
+    children: [] // if children && children.length
+  },
+  {
+    key: 'config-center',
+    title: '配置中心',
+    children: [
+      {
+        key: 'system-register',
+        title: '应用注册'
+      },
+      {
+        key: 'menu-setting',
+        title: '菜单配置'
+      }
+    ]
+  },
+  {
+    key: 'sub-system',
+    title: '子应用',
+    children: [
+      {
+        key: 'app-react',
+        title: 'app-react'
+      },
+      {
+        key: 'app-vue',
+        title: 'app-vue'
+      }
+    ]
+  }
+];
+
+const getMenu = (menus: any[]) =>
+  menus.map((m) => {
+    if (m.children?.length) {
+      const subMenus: any = m.children;
+      return (
+        <SubMenu key={m.key} title={m.title}>
+          {getMenu(subMenus)}
+        </SubMenu>
+      );
+    } else {
+      return <Menu.Item key={m.key}>{m.title}</Menu.Item>;
+    }
+  });
+
 const AppLayout: React.FC<{}> = () => {
-  const history = useHistory()
+  const history = useHistory();
+  const [menuData, setMenuData] = useState([]);
   useLayoutEffect(() => {
     if (!(window as any).qiankunStarted) {
-      (window as any).qiankunStarted = true;
-      start();
+      api.getApp().then((res: any) => {
+        registerMicroApps(
+          res.data.list.map((item: any) => {
+            return {
+              name: item.appName,
+              entry: item.entry,
+              container: '#third-app-container',
+              activeRule: item.activeRule
+            };
+          })
+        );
+        (window as any).qiankunStarted = true;
+        start();
+      });
     }
+  }, []);
+  useEffect(() => {
+    api.getMenu().then((res: any) => {
+      setMenuData(res.data || []);
+    });
   }, []);
   return (
     <div className="main-container">
@@ -24,39 +98,12 @@ const AppLayout: React.FC<{}> = () => {
         <div className="logo-wrap">LOGO</div>
         <Menu
           onClick={(value) => {
-            history.push('/main/' + value.key)
+            history.push('/main/' + value.key);
           }}
           style={{ width: '100%' }}
           defaultSelectedKeys={['home']}
           mode="inline">
-          <Menu.Item key="home">首页</Menu.Item>
-          <Menu.Item key="dashboard">Dashboard</Menu.Item>
-          <Menu.Item key="app-react">app-react</Menu.Item>
-
-          <SubMenu key="sub1" icon={<MailOutlined />} title="Navigation One">
-            <Menu.ItemGroup key="g1" title="Item 1">
-              <Menu.Item key="1">Option 1</Menu.Item>
-              <Menu.Item key="2">Option 2</Menu.Item>
-            </Menu.ItemGroup>
-            <Menu.ItemGroup key="g2" title="Item 2">
-              <Menu.Item key="3">Option 3</Menu.Item>
-              <Menu.Item key="4">Option 4</Menu.Item>
-            </Menu.ItemGroup>
-          </SubMenu>
-          <SubMenu key="sub2" icon={<AppstoreOutlined />} title="Navigation Two">
-            <Menu.Item key="5">Option 5</Menu.Item>
-            <Menu.Item key="6">Option 6</Menu.Item>
-            <SubMenu key="sub3" title="Submenu">
-              <Menu.Item key="7">Option 7</Menu.Item>
-              <Menu.Item key="8">Option 8</Menu.Item>
-            </SubMenu>
-          </SubMenu>
-          <SubMenu key="sub4" icon={<SettingOutlined />} title="Navigation Three">
-            <Menu.Item key="9">Option 9</Menu.Item>
-            <Menu.Item key="10">Option 10</Menu.Item>
-            <Menu.Item key="11">Option 11</Menu.Item>
-            <Menu.Item key="12">Option 12</Menu.Item>
-          </SubMenu>
+          {getMenu(menuData)}
         </Menu>
       </div>
 
@@ -64,12 +111,15 @@ const AppLayout: React.FC<{}> = () => {
         <div className="head-container"></div>
         <div className="content-container">
           <div id="third-app-container"></div>
-          <div>
+          <div className="route-view-container">
             <React.Suspense fallback={<Loading />}>
               <Switch>
                 <Route exact path="/main" render={() => <Redirect to="/main/home" />} />
                 <Route path="/main/home" render={() => <Home />} />
                 <Route path="/main/dashboard" render={() => <Dashboard />} />
+
+                <Route path="/main/menu-setting" render={() => <MenuSetting />} />
+                <Route path="/main/system-register" render={() => <SystemRegister />} />
               </Switch>
             </React.Suspense>
           </div>
